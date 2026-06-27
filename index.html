@@ -1,5 +1,3 @@
-
-
 <html><head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
@@ -27,7 +25,6 @@
   display: none;
 }
 </style>
-</script>
 </head>
 <body>
   <div class="logo-container">
@@ -82,9 +79,31 @@
     gtag('config', 'G-WLTG1S4STB');
   </script>
   <script>
+    // Audio elements
+    const sndMenuMove = new Audio('audios/snd_menumove.mp3');
+    const sndSelect = new Audio('audios/snd_select.mp3');
+
+    function playMove() {
+      sndMenuMove.currentTime = 0;
+      sndMenuMove.play().catch(() => {});
+    }
+
+    function playSelect() {
+      sndSelect.currentTime = 0;
+      sndSelect.play().catch(() => {});
+    }
+
+    // Play select sound when clicking rows
+    document.querySelectorAll('.row, .disabled-row').forEach(row => {
+      row.addEventListener('click', () => {
+        playSelect();
+      });
+    });
+
     let gamestarted = false;
     function updateButton() {}
     function loadChapter(chapter) {
+      playSelect();
       const chapterPath = `chapter${chapter}/`;
       fetch(`${chapterPath}index.html`).then(res => {
         if (!res.ok) {
@@ -115,9 +134,11 @@
         window.location.href = `${chapterPath}index.html`;
       });
     }
+
     document.querySelectorAll('.row').forEach(row => {
       row.addEventListener('mouseenter', () => {
         if (!gamestarted) {
+          playMove();
           if (selectedChapter) {
             document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
           }
@@ -128,6 +149,7 @@
     document.addEventListener('keydown', function(event) {
       if (!gamestarted) {
       if (event.key === 'ArrowUp') {
+        playMove();
         if (selectedChapter === null) {
           selectedChapter = 0;
           document.querySelectorAll('.row')[0].classList.add("selected");
@@ -140,6 +162,7 @@
           document.querySelectorAll('.row')[selectedChapter].classList.add("selected");
         }
       } else if (event.key === 'ArrowDown') {
+        playMove();
         if (selectedChapter === null) {
           selectedChapter = 0;
           document.querySelectorAll('.row')[0].classList.add("selected");
@@ -156,6 +179,7 @@
         }
       } else if (event.key === 'Enter') {
         if (selectedChapter !== null) {
+          playSelect();
           window.location.href = document.querySelectorAll('.row')[selectedChapter].href;
         }
       }
