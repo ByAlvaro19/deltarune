@@ -135,11 +135,20 @@
       });
     }
 
-    async function setSaveItem(key, value) {
+    async function setSaveItem(key, textContent) {
       const db = await getDB();
       return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).put(value, key);
+        
+        // Emscripten IDBFS format conversion
+        const uint8Contents = new TextEncoder().encode(textContent);
+        const emscriptenFileObj = {
+          timestamp: new Date(),
+          mode: 33206, // Standard file mode (0100666)
+          contents: uint8Contents
+        };
+
+        tx.objectStore(STORE_NAME).put(emscriptenFileObj, key);
         tx.oncomplete = () => resolve();
         tx.onerror = (e) => reject(e.target.error);
       });
@@ -155,10 +164,17 @@
         const allData = await getAllSaves();
         for (const key in allData) {
           if (key.includes('filech') || key.includes('dr_') || key.includes('_savedata')) {
-            // Clean up filename inside zip by dropping the prefix if you want, 
-            // but keeping standard key names matches original behavior safely.
             const cleanKey = key.replace(/^\/_savedata\//, '');
-            zip.file(cleanKey, allData[key]);
+            
+            // Convert Emscripten binary array back into readable text for the zip
+            let rawText = "";
+            if (allData[key] && allData[key].contents) {
+              rawText = new TextDecoder().decode(allData[key].contents);
+            } else if (typeof allData[key] === 'string') {
+              rawText = allData[key];
+            }
+
+            zip.file(cleanKey, rawText);
             hasData = true;
           }
         }
@@ -192,7 +208,6 @@
         jsZipInstance.forEach(function (relativePath, zipEntry) {
           if (!zipEntry.dir) {
             const p = zipEntry.async("string").then(function (content) {
-              // Automatically re-prepends execution path context if missing in zip filenames
               let fullKey = zipEntry.name;
               if (!fullKey.startsWith('/_savedata/')) {
                 fullKey = '/_savedata/' + fullKey;
