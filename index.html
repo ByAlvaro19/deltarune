@@ -100,13 +100,13 @@
       sndSelect.play().catch(() => {});
     }
 
-    // --- IndexedDB Wrapper Logic ---
-    const DB_NAME = 'DeltaruneSavesDB';
-    const STORE_NAME = 'saves';
+    // --- Core Engine IndexedDB Match ---
+    const DB_NAME = '/_savedata';
+    const STORE_NAME = 'FILE_DATA';
 
     function getDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
+        const request = indexedDB.open(DB_NAME);
         request.onupgradeneeded = (e) => {
           e.target.result.createObjectStore(STORE_NAME);
         };
@@ -154,19 +154,17 @@
       try {
         const allData = await getAllSaves();
         for (const key in allData) {
-          if (key.includes('filech') || key.includes('dr_') || key === '_savedata') {
-            zip.file(key, allData[key]);
+          if (key.includes('filech') || key.includes('dr_') || key.includes('_savedata')) {
+            // Clean up filename inside zip by dropping the prefix if you want, 
+            // but keeping standard key names matches original behavior safely.
+            const cleanKey = key.replace(/^\/_savedata\//, '');
+            zip.file(cleanKey, allData[key]);
             hasData = true;
           }
         }
 
-        if (!hasData && allData['_savedata']) {
-          zip.file("_savedata", allData['_savedata']);
-          hasData = true;
-        }
-
         if (!hasData) {
-          alert('No save data found in IndexedDB to export!');
+          alert('No save data found in the engine database!');
           return;
         }
 
@@ -194,7 +192,12 @@
         jsZipInstance.forEach(function (relativePath, zipEntry) {
           if (!zipEntry.dir) {
             const p = zipEntry.async("string").then(function (content) {
-              return setSaveItem(zipEntry.name, content);
+              // Automatically re-prepends execution path context if missing in zip filenames
+              let fullKey = zipEntry.name;
+              if (!fullKey.startsWith('/_savedata/')) {
+                fullKey = '/_savedata/' + fullKey;
+              }
+              return setSaveItem(fullKey, content);
             });
             promises.push(p);
           }
@@ -206,10 +209,10 @@
 
         return Promise.all(promises);
       }).then(function() {
-        alert('Saves imported successfully into IndexedDB! Reloading...');
+        alert('Saves imported successfully! Reloading...');
         window.location.reload();
       }).catch(err => {
-        alert("Error importing zip file. Make sure it's a valid zip containing save files.");
+        alert("Error importing zip file.");
         console.error(err);
       });
     }
