@@ -71,12 +71,12 @@
     <a href="javascript:exportSave()" class="row">
       <span class="chapter">Save Data</span>
       <span class="title">Export Save (.zip)</span>
-      <img src="icons/0.png" style="opacity: 0.5;">
+      <img src="icons/export.png" style="opacity:1;">
     </a>
     <a href="javascript:document.getElementById('importFile').click()" class="row">
       <span class="chapter">Save Data</span>
       <span class="title">Import Save (.zip)</span>
-      <img src="icons/0.png" style="opacity: 0.5;">
+      <img src="icons/import.png" style="opacity:1;">
     </a>
     <input type="file" id="importFile" accept=".zip" style="display:none" onchange="importSave(this)">
   </div>
@@ -100,39 +100,86 @@
       sndSelect.play().catch(() => {});
     }
 
-    // Save Data Functions
-    function exportSave() {
+    // --- IndexedDB Wrapper Logic ---
+    const DB_NAME = 'DeltaruneSavesDB';
+    const STORE_NAME = 'saves';
+
+    function getDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+          e.target.result.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function getAllSaves() {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.openCursor();
+        const data = {};
+        request.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            data[cursor.key] = cursor.value;
+            cursor.continue();
+          } else {
+            resolve(data);
+          }
+        };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function setSaveItem(key, value) {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    // --- Save Data Functions ---
+    async function exportSave() {
       playSelect();
-      
-      // Collect all keys inside the _savedata domain from localStorage
       const zip = new JSZip();
       let hasData = false;
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        // Supports both raw file keys or standard structured keys if nested
-        if (key.includes('filech') || key.includes('dr_') || key === '_savedata') {
-          zip.file(key, localStorage.getItem(key));
+      try {
+        const allData = await getAllSaves();
+        for (const key in allData) {
+          if (key.includes('filech') || key.includes('dr_') || key === '_savedata') {
+            zip.file(key, allData[key]);
+            hasData = true;
+          }
+        }
+
+        if (!hasData && allData['_savedata']) {
+          zip.file("_savedata", allData['_savedata']);
           hasData = true;
         }
-      }
 
-      if (!hasData && localStorage.getItem('_savedata')) {
-        zip.file("_savedata", localStorage.getItem('_savedata'));
-        hasData = true;
-      }
+        if (!hasData) {
+          alert('No save data found in IndexedDB to export!');
+          return;
+        }
 
-      if (!hasData) {
-        alert('No save data found in browser to export!');
-        return;
+        zip.generateAsync({type:"blob"}).then(function(content) {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(content);
+          a.download = "deltarune_saves.zip";
+          a.click();
+        });
+      } catch (err) {
+        alert('Failed to export saves.');
+        console.error(err);
       }
-
-      zip.generateAsync({type:"blob"}).then(function(content) {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = "deltarune_saves.zip";
-        a.click();
-      });
     }
 
     function importSave(input) {
@@ -147,8 +194,7 @@
         jsZipInstance.forEach(function (relativePath, zipEntry) {
           if (!zipEntry.dir) {
             const p = zipEntry.async("string").then(function (content) {
-              // Save each file directly into localStorage using its filename as the key
-              localStorage.setItem(zipEntry.name, content);
+              return setSaveItem(zipEntry.name, content);
             });
             promises.push(p);
           }
@@ -160,7 +206,7 @@
 
         return Promise.all(promises);
       }).then(function() {
-        alert('Saves imported successfully! Reloading...');
+        alert('Saves imported successfully into IndexedDB! Reloading...');
         window.location.reload();
       }).catch(err => {
         alert("Error importing zip file. Make sure it's a valid zip containing save files.");
