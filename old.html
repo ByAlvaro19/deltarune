@@ -8,7 +8,6 @@
   gtag('js', new Date());
   gtag('config', 'G-PXHK7Q7G3Z');
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
      *{
   -webkit-appearance: none;
@@ -67,18 +66,11 @@
       <span class="disabled-title">--</span>
       <img src="icons/0.png">
     </a>
-    
-    <a href="javascript:exportSave()" class="row">
-      <span class="chapter">Save Data</span>
-      <span class="title">Export Save (.zip)</span>
-      <img src="icons/0.png" style="opacity: 0.5;">
+    <a href="javascript:window.open('https://truffled.lol', '_blank')" class="row">
+      <span class="chapter"></span>
+      <span class="title">Chapter 5 ported by me, every other chapter by bog</span>
+      <span class="badge"></span>
     </a>
-    <a href="javascript:document.getElementById('importFile').click()" class="row">
-      <span class="chapter">Save Data</span>
-      <span class="title">Import Save (.zip)</span>
-      <img src="icons/0.png" style="opacity: 0.5;">
-    </a>
-    <input type="file" id="importFile" accept=".zip" style="display:none" onchange="importSave(this)">
   </div>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -87,6 +79,7 @@
     gtag('config', 'G-WLTG1S4STB');
   </script>
   <script>
+    // Audio elements
     const sndMenuMove = new Audio('audios/snd_menumove.mp3');
     const sndSelect = new Audio('audios/snd_select.mp3');
 
@@ -100,74 +93,7 @@
       sndSelect.play().catch(() => {});
     }
 
-    // Save Data Functions
-    function exportSave() {
-      playSelect();
-      
-      // Collect all keys inside the _savedata domain from localStorage
-      const zip = new JSZip();
-      let hasData = false;
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        // Supports both raw file keys or standard structured keys if nested
-        if (key.includes('filech') || key.includes('dr_') || key === '_savedata') {
-          zip.file(key, localStorage.getItem(key));
-          hasData = true;
-        }
-      }
-
-      if (!hasData && localStorage.getItem('_savedata')) {
-        zip.file("_savedata", localStorage.getItem('_savedata'));
-        hasData = true;
-      }
-
-      if (!hasData) {
-        alert('No save data found in browser to export!');
-        return;
-      }
-
-      zip.generateAsync({type:"blob"}).then(function(content) {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = "deltarune_saves.zip";
-        a.click();
-      });
-    }
-
-    function importSave(input) {
-      playSelect();
-      const file = input.files[0];
-      if (!file) return;
-
-      const zip = new JSZip();
-      zip.loadAsync(file).then(function(jsZipInstance) {
-        const promises = [];
-        
-        jsZipInstance.forEach(function (relativePath, zipEntry) {
-          if (!zipEntry.dir) {
-            const p = zipEntry.async("string").then(function (content) {
-              // Save each file directly into localStorage using its filename as the key
-              localStorage.setItem(zipEntry.name, content);
-            });
-            promises.push(p);
-          }
-        });
-
-        if (promises.length === 0) {
-          throw new Error("Zip file is empty!");
-        }
-
-        return Promise.all(promises);
-      }).then(function() {
-        alert('Saves imported successfully! Reloading...');
-        window.location.reload();
-      }).catch(err => {
-        alert("Error importing zip file. Make sure it's a valid zip containing save files.");
-        console.error(err);
-      });
-    }
-
+    // Play select sound when clicking rows
     document.querySelectorAll('.row, .disabled-row').forEach(row => {
       row.addEventListener('click', () => {
         playSelect();
@@ -213,7 +139,7 @@
       row.addEventListener('mouseenter', () => {
         if (!gamestarted) {
           playMove();
-          if (selectedChapter !== null) {
+          if (selectedChapter) {
             document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
           }
         }
