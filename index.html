@@ -1,14 +1,9 @@
-<html><head>
+<!DOCTYPE html>
+<html>
+<head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="style.css">
-   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PXHK7Q7G3Z"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-PXHK7Q7G3Z');
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
      *{
   -webkit-appearance: none;
@@ -45,7 +40,7 @@
 </head>
 <body>
   <div class="logo-container">
-    <img src="logo.png" alt="Logo" class="logo">
+    <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/logo.png" alt="Logo" class="logo">
   </div>
 
   <div id="notice-container"></div>
@@ -54,68 +49,57 @@
     <a href="javascript:loadChapter(1)" class="row">
       <span class="chapter">Chapter 1</span>
       <span class="title">The Beginning</span>
-      <img src="icons/1.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/1.png">
     </a>
     <a href="javascript:loadChapter(2)" class="row">
       <span class="chapter">Chapter 2</span>
       <span class="title">A Cyber's World</span>
-      <img src="icons/2.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/2.png">
     </a>
     <a href="javascript:loadChapter(3)" class="row">
       <span class="chapter">Chapter 3</span>
       <span class="title">Late Night</span>
-      <img src="icons/3.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/3.png">
     </a>
     <a href="javascript:loadChapter(4)" class="row">
       <span class="chapter">Chapter 4</span>
       <span class="title">Prophecy</span>
-      <img src="icons/4.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/4.png">
     </a>
     <a href="javascript:loadChapter(5)" class="row">
       <span class="chapter">Chapter 5</span>
       <span class="title">Festival Day</span>
-      <img src="icons/5.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/5.png">
     </a>
     <a href="javascript:alert('Chapter 6 coming soon!')" class="disabled-row">
       <span class="chapter">Chapter 6</span>
       <span class="disabled-title">--</span>
-      <img src="icons/0.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/0.png">
     </a>
     <a href="javascript:alert('Chapter 7 coming soon!')" class="disabled-row">
       <span class="chapter">Chapter 7</span>
       <span class="disabled-title">--</span>
-      <img src="icons/0.png">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/0.png">
     </a>
     
     <a href="javascript:exportSave()" class="row">
       <span class="chapter">Save Data</span>
       <span class="title">Export Save (.zip)</span>
-      <img src="icons/export.png" style="opacity:1;">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/export.png" style="opacity:1;">
     </a>
     <a href="javascript:document.getElementById('importFile').click()" class="row">
       <span class="chapter">Save Data</span>
       <span class="title">Import Save (.zip)</span>
-      <img src="icons/import.png" style="opacity:1;">
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/import.png" style="opacity:1;">
     </a>
     <input type="file" id="importFile" accept=".zip" style="display:none" onchange="importSave(this)">
   </div>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-WLTG1S4STB');
-  </script>
-  <script>
-    if (window.location.hostname === "deltarunefullwebport.vercel.app") {
-      document.getElementById('notice-container').innerHTML = `
-        <div class="deactivation-warning">
-          Please export your saves as this website will be deactivated in 2/3 weeks, for the new one go to <a href="https://byalvaro19.github.io/deltarune" target="_blank">byalvaro19.github.io/deltarune</a>
-        </div>
-      `;
-    }
 
-    const sndMenuMove = new Audio('audios/snd_menumove.mp3');
-    const sndSelect = new Audio('audios/snd_select.mp3');
+  <script>
+    // GitHub hosted audio assets
+    const REPO_BASE = "https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/";
+    const sndMenuMove = new Audio(REPO_BASE + 'audios/snd_menumove.mp3');
+    const sndSelect = new Audio(REPO_BASE + 'audios/snd_select.mp3');
 
     function playMove() {
       sndMenuMove.currentTime = 0;
@@ -265,21 +249,22 @@
     function updateButton() {}
     function loadChapter(chapter) {
       playSelect();
-      const chapterPath = `chapter${chapter}/`;
+      const chapterPath = `${REPO_BASE}chapter${chapter}/`;
+      
       fetch(`${chapterPath}index.html`).then(res => {
         if (!res.ok) {
           throw new Error(`Failed to load ${chapterPath}index.html`);
         }
         return res.text();
       }).then(html => {
-        gamestarted = true;
+        gamestarter = true;
         const chapterDocument = new DOMParser().parseFromString(html, 'text/html');
         let base = chapterDocument.querySelector('base');
         if (!base) {
           base = chapterDocument.createElement('base');
           chapterDocument.head.prepend(base);
         }
-        base.href = new URL(chapterPath, window.location.href).href;
+        base.href = chapterPath;
         document.documentElement.innerHTML = chapterDocument.documentElement.innerHTML;
         document.documentElement.querySelectorAll('script').forEach(oldScript => {
           const newScript = document.createElement('script');
@@ -341,10 +326,16 @@
       } else if (event.key === 'Enter') {
         if (selectedChapter !== null) {
           playSelect();
-          window.location.href = document.querySelectorAll('.row')[selectedChapter].href;
+          const targetChapter = selectedChapter + 1;
+          if (targetChapter <= 5) {
+            loadChapter(targetChapter);
+          } else {
+            alert('Chapter coming soon!');
+          }
         }
       }
       }
     });
   </script>
-</body></html>
+</body>
+</html>
