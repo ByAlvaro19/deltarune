@@ -25,12 +25,32 @@
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* Notice styling so it looks clean */
+.deactivation-notice {
+  text-align: center;
+  color: #ff3333;
+  font-family: sans-serif;
+  font-weight: bold;
+  margin: 10px auto;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.deactivation-notice a {
+  color: #3399ff;
+  text-decoration: underline;
+}
 </style>
 </head>
 <body>
   <div class="logo-container">
     <img src="logo.png" alt="Logo" class="logo">
   </div>
+  
+  <!-- Notice Container for JavaScript injection -->
+  <div id="notice-container"></div>
+
   <div class="menu">
     <a href="javascript:loadChapter(1)" class="row">
       <span class="chapter">Chapter 1</span>
@@ -87,6 +107,16 @@
     gtag('config', 'G-WLTG1S4STB');
   </script>
   <script>
+    // Hostname detection script
+    if (window.location.hostname === "deltarunefullwebport.vercel.app") {
+      document.getElementById('notice-container').innerHTML = `
+        <div class="deactivation-notice">
+          Please export your saves as this website will be deactivated in 2/3 weeks, 
+          for the new one go to <a href="https://byalvaro19.github.io/deltarune" target="_blank">byalvaro19.github.io/deltarune</a>
+        </div>
+      `;
+    }
+
     const sndMenuMove = new Audio('audios/snd_menumove.mp3');
     const sndSelect = new Audio('audios/snd_select.mp3');
 
