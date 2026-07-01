@@ -247,8 +247,12 @@
 
     let gamestarted = false;
     function updateButton() {}
+    
     function loadChapter(chapter) {
       playSelect();
+      gamestarted = true; 
+      document.removeEventListener('keydown', handleMenuNavigation); 
+      
       const chapterPath = `${REPO_BASE}chapter${chapter}/`;
       
       fetch(`${chapterPath}index.html`).then(res => {
@@ -257,7 +261,6 @@
         }
         return res.text();
       }).then(html => {
-        gamestarter = true;
         const chapterDocument = new DOMParser().parseFromString(html, 'text/html');
         let base = chapterDocument.querySelector('base');
         if (!base) {
@@ -286,42 +289,46 @@
         if (!gamestarted) {
           playMove();
           if (selectedChapter !== null) {
-            document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
+            const rows = document.querySelectorAll('.row');
+            if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
           }
         }
       });
     });
+    
     let selectedChapter = null;
-    document.addEventListener('keydown', function(event) {
-      if (!gamestarted) {
+    
+    function handleMenuNavigation(event) {
+      if (gamestarted) return;
+      const rows = document.querySelectorAll('.row');
+      if (rows.length === 0) return;
+
       if (event.key === 'ArrowUp') {
         playMove();
         if (selectedChapter === null) {
           selectedChapter = 0;
-          document.querySelectorAll('.row')[0].classList.add("selected");
+          rows[0].classList.add("selected");
         } else {
-          document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
+          if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
           selectedChapter--;
           if (selectedChapter < 0) {
-            selectedChapter = document.querySelectorAll('.row').length - 1;
+            selectedChapter = rows.length - 1;
           }
-          document.querySelectorAll('.row')[selectedChapter].classList.add("selected");
+          if(rows[selectedChapter]) rows[selectedChapter].add("selected");
+          if(rows[selectedChapter]) rows[selectedChapter].classList.add("selected");
         }
       } else if (event.key === 'ArrowDown') {
         playMove();
         if (selectedChapter === null) {
           selectedChapter = 0;
-          document.querySelectorAll('.row')[0].classList.add("selected");
+          rows[0].classList.add("selected");
         } else {
-          if (selectedChapter+1 >= document.querySelectorAll('.row').length) {
-            document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
+          if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
+          selectedChapter++;
+          if (selectedChapter >= rows.length) {
             selectedChapter = 0;
-            document.querySelectorAll('.row')[0].classList.add("selected");
-          } else {
-            document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
-            selectedChapter++;
-            document.querySelectorAll('.row')[selectedChapter].classList.add("selected");
           }
+          if(rows[selectedChapter]) rows[selectedChapter].classList.add("selected");
         }
       } else if (event.key === 'Enter') {
         if (selectedChapter !== null) {
@@ -334,8 +341,9 @@
           }
         }
       }
-      }
-    });
+    }
+
+    document.addEventListener('keydown', handleMenuNavigation);
   </script>
 </body>
 </html>
