@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+     *{
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+*:focus {
+  outline: none;
+  -webkit-focus-ring-color: transparent;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.deactivation-warning {
+  text-align: center;
+  color: #ffffff; 
+  font-family: sans-serif;
+  font-weight: bold;
+  margin: 20px auto;
+  max-width: 80%;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.deactivation-warning a {
+  color: #ffff00; 
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+  <div class="logo-container">
+    <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/logo.png" alt="Logo" class="logo">
+  </div>
+
+  <div id="notice-container"></div>
+
+  <div class="menu">
+    <a href="javascript:loadChapter(1)" class="row">
+      <span class="chapter">Chapter 1</span>
+      <span class="title">The Beginning</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/1.png">
+    </a>
+    <a href="javascript:loadChapter(2)" class="row">
+      <span class="chapter">Chapter 2</span>
+      <span class="title">A Cyber's World</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/2.png">
+    </a>
+    <a href="javascript:loadChapter(3)" class="row">
+      <span class="chapter">Chapter 3</span>
+      <span class="title">Late Night</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/3.png">
+    </a>
+    <a href="javascript:loadChapter(4)" class="row">
+      <span class="chapter">Chapter 4</span>
+      <span class="title">Prophecy</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/4.png">
+    </a>
+    <a href="javascript:loadChapter(5)" class="row">
+      <span class="chapter">Chapter 5</span>
+      <span class="title">Festival Day</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/5.png">
+    </a>
+    <a href="javascript:alert('Chapter 6 coming soon!')" class="disabled-row">
+      <span class="chapter">Chapter 6</span>
+      <span class="disabled-title">--</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/0.png">
+    </a>
+    <a href="javascript:alert('Chapter 7 coming soon!')" class="disabled-row">
+      <span class="chapter">Chapter 7</span>
+      <span class="disabled-title">--</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/0.png">
+    </a>
+    
+    <a href="javascript:exportSave()" class="row">
+      <span class="chapter">Save Data</span>
+      <span class="title">Export Save (.zip)</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/export.png" style="opacity:1;">
+    </a>
+    <a href="javascript:document.getElementById('importFile').click()" class="row">
+      <span class="chapter">Save Data</span>
+      <span class="title">Import Save (.zip)</span>
+      <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/import.png" style="opacity:1;">
+    </a>
+    <input type="file" id="importFile" accept=".zip" style="display:none" onchange="importSave(this)">
+  </div>
+
+  <script>
+    // GitHub hosted audio assets
+    const REPO_BASE = "https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/";
+    const sndMenuMove = new Audio(REPO_BASE + 'audios/snd_menumove.mp3');
+    const sndSelect = new Audio(REPO_BASE + 'audios/snd_select.mp3');
+
+    function playMove() {
+      sndMenuMove.currentTime = 0;
+      sndMenuMove.play().catch(() => {});
+    }
+
+    function playSelect() {
+      sndSelect.currentTime = 0;
+      sndSelect.play().catch(() => {});
+    }
+
+    const DB_NAME = '/_savedata';
+    const STORE_NAME = 'FILE_DATA';
+
+    function getDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME);
+        request.onupgradeneeded = (e) => {
+          e.target.result.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function getAllSaves() {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.openCursor();
+        const data = {};
+        request.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            data[cursor.key] = cursor.value;
+            cursor.continue();
+          } else {
+            resolve(data);
+          }
+        };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function setSaveItem(key, textContent) {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        
+        const uint8Contents = new TextEncoder().encode(textContent);
+        const emscriptenFileObj = {
+          timestamp: new Date(),
+          mode: 33206, 
+          contents: uint8Contents
+        };
+
+        tx.objectStore(STORE_NAME).put(emscriptenFileObj, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function exportSave() {
+      playSelect();
+      const zip = new JSZip();
+      let hasData = false;
+
+      try {
+        const allData = await getAllSaves();
+        for (const key in allData) {
+          if (key.includes('filech') || key.includes('dr_') || key.includes('_savedata')) {
+            const cleanKey = key.replace(/^\/_savedata\//, '');
+            
+            let rawText = "";
+            if (allData[key] && allData[key].contents) {
+              rawText = new TextDecoder().decode(allData[key].contents);
+            } else if (typeof allData[key] === 'string') {
+              rawText = allData[key];
+            }
+
+            zip.file(cleanKey, rawText);
+            hasData = true;
+          }
+        }
+
+        if (!hasData) {
+          alert('No save data found in the engine database!');
+          return;
+        }
+
+        zip.generateAsync({type:"blob"}).then(function(content) {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(content);
+          a.download = "deltarune_saves.zip";
+          a.click();
+        });
+      } catch (err) {
+        alert('Failed to export saves.');
+        console.error(err);
+      }
+    }
+
+    function importSave(input) {
+      playSelect();
+      const file = input.files[0];
+      if (!file) return;
+
+      const zip = new JSZip();
+      zip.loadAsync(file).then(function(jsZipInstance) {
+        const promises = [];
+        
+        jsZipInstance.forEach(function (relativePath, zipEntry) {
+          if (!zipEntry.dir) {
+            const p = zipEntry.async("string").then(function (content) {
+              let fullKey = zipEntry.name;
+              if (!fullKey.startsWith('/_savedata/')) {
+                fullKey = '/_savedata/' + fullKey;
+              }
+              return setSaveItem(fullKey, content);
+            });
+            promises.push(p);
+          }
+        });
+
+        if (promises.length === 0) {
+          throw new Error("Zip file is empty!");
+        }
+
+        return Promise.all(promises);
+      }).then(function() {
+        alert('Saves imported successfully! Reloading...');
+        window.location.reload();
+      }).catch(err => {
+        alert("Error importing zip file.");
+        console.error(err);
+      });
+    }
+
+    document.querySelectorAll('.row, .disabled-row').forEach(row => {
+      row.addEventListener('click', () => {
+        playSelect();
+      });
+    });
+
+    let gamestarted = false;
+    function updateButton() {}
+    
+    function loadChapter(chapter) {
+      playSelect();
+      gamestarted = true; 
+      document.removeEventListener('keydown', handleMenuNavigation); 
+      
+      const chapterPath = `${REPO_BASE}chapter${chapter}/`;
+      
+      fetch(`${chapterPath}index.html`).then(res => {
+        if (!res.ok) {
+          throw new Error(`Failed to load ${chapterPath}index.html`);
+        }
+        return res.text();
+      }).then(html => {
+        const chapterDocument = new DOMParser().parseFromString(html, 'text/html');
+        let base = chapterDocument.querySelector('base');
+        if (!base) {
+          base = chapterDocument.createElement('base');
+          chapterDocument.head.prepend(base);
+        }
+        base.href = chapterPath;
+        document.documentElement.innerHTML = chapterDocument.documentElement.innerHTML;
+        document.documentElement.querySelectorAll('script').forEach(oldScript => {
+          const newScript = document.createElement('script');
+          if (oldScript.src) {
+            newScript.src = oldScript.src;
+          } else {
+            newScript.textContent = oldScript.textContent;
+          }
+          document.body.appendChild(newScript);
+        });
+      }).catch(error => {
+        console.error(error);
+        window.location.href = `${chapterPath}index.html`;
+      });
+    }
+
+    document.querySelectorAll('.row').forEach(row => {
+      row.addEventListener('mouseenter', () => {
+        if (!gamestarted) {
+          playMove();
+          if (selectedChapter !== null) {
+            const rows = document.querySelectorAll('.row');
+            if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
+          }
+        }
+      });
+    });
+    
+    let selectedChapter = null;
+    
+    function handleMenuNavigation(event) {
+      if (gamestarted) return;
+      const rows = document.querySelectorAll('.row');
+      if (rows.length === 0) return;
+
+      if (event.key === 'ArrowUp') {
+        playMove();
+        if (selectedChapter === null) {
+          selectedChapter = 0;
+          rows[0].classList.add("selected");
+        } else {
+          if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
+          selectedChapter--;
+          if (selectedChapter < 0) {
+            selectedChapter = rows.length - 1;
+          }
+          if(rows[selectedChapter]) rows[selectedChapter].add("selected");
+          if(rows[selectedChapter]) rows[selectedChapter].classList.add("selected");
+        }
+      } else if (event.key === 'ArrowDown') {
+        playMove();
+        if (selectedChapter === null) {
+          selectedChapter = 0;
+          rows[0].classList.add("selected");
+        } else {
+          if(rows[selectedChapter]) rows[selectedChapter].classList.remove("selected");
+          selectedChapter++;
+          if (selectedChapter >= rows.length) {
+            selectedChapter = 0;
+          }
+          if(rows[selectedChapter]) rows[selectedChapter].classList.add("selected");
+        }
+      } else if (event.key === 'Enter') {
+        if (selectedChapter !== null) {
+          playSelect();
+          const targetChapter = selectedChapter + 1;
+          if (targetChapter <= 5) {
+            loadChapter(targetChapter);
+          } else {
+            alert('Chapter coming soon!');
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleMenuNavigation);
+  </script>
+</body>
+</html>
