@@ -26,19 +26,18 @@
   display: none;
 }
 
-/* Notice styling so it looks clean */
-.deactivation-notice {
+.deactivation-warning {
   text-align: center;
-  color: #ff3333;
+  color: #ffffff; 
   font-family: sans-serif;
   font-weight: bold;
-  margin: 10px auto;
+  margin: 20px auto;
   max-width: 80%;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4;
 }
-.deactivation-notice a {
-  color: #3399ff;
+.deactivation-warning a {
+  color: #ffff00; 
   text-decoration: underline;
 }
 </style>
@@ -47,8 +46,7 @@
   <div class="logo-container">
     <img src="logo.png" alt="Logo" class="logo">
   </div>
-  
-  <!-- Notice Container for JavaScript injection -->
+
   <div id="notice-container"></div>
 
   <div class="menu">
@@ -107,12 +105,10 @@
     gtag('config', 'G-WLTG1S4STB');
   </script>
   <script>
-    // Hostname detection script
     if (window.location.hostname === "deltarunefullwebport.vercel.app") {
       document.getElementById('notice-container').innerHTML = `
-        <div class="deactivation-notice">
-          Please export your saves as this website will be deactivated in 2/3 weeks, 
-          for the new one go to <a href="https://byalvaro19.github.io/deltarune" target="_blank">byalvaro19.github.io/deltarune</a>
+        <div class="deactivation-warning">
+          Please export your saves as this website will be deactivated in 2/3 weeks, for the new one go to <a href="https://byalvaro19.github.io/deltarune" target="_blank">byalvaro19.github.io/deltarune</a>
         </div>
       `;
     }
@@ -184,7 +180,6 @@
       });
     }
 
-    // --- Save Data Functions ---
     async function exportSave() {
       playSelect();
       const zip = new JSZip();
@@ -196,7 +191,6 @@
           if (key.includes('filech') || key.includes('dr_') || key.includes('_savedata')) {
             const cleanKey = key.replace(/^\/_savedata\//, '');
             
-            // Convert Emscripten binary array back into readable text for the zip
             let rawText = "";
             if (allData[key] && allData[key].contents) {
               rawText = new TextDecoder().decode(allData[key].contents);
