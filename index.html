@@ -41,7 +41,6 @@
     text-decoration: underline;
   }
 
-  /* --- Integrated Game/HUD Layer Styles --- */
   #game-frame { 
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
       border: none; z-index: 1; outline: none; display: none;
@@ -97,7 +96,6 @@
       font-family: sans-serif;
   }
 
-  /* Custom isolated slider stylings */
   #settings-panel input[type="range"] {
       -webkit-appearance: none !important;
       appearance: none !important;
@@ -371,7 +369,6 @@
       applyConfig();
     }
     
-    // --- Mobile Interface Layout Mapping ---
     const frame = document.getElementById('game-frame');
     const hud = document.getElementById('hud-layer');
     const STORAGE_KEY = 'deltarune-v17-stable';
@@ -617,11 +614,10 @@
     document.addEventListener('keydown', handleMenuNavigation);
 
     window.onload = () => {
-        // Restore domain notice check
         if (window.location.hostname === 'deltarunefullwebport.vercel.app') {
             document.getElementById('notice-container').innerHTML = `
                 <div class="deactivation-warning">
-                    This domain might get deactivated soon. Please switch to the new official domain: 
+                    This domain might get deactivated soon. Please export your saves and switch to the new official domain: 
                     <a href="https://byalvaro19.github.io/deltarune/" target="_blank">byalvaro19.github.io/deltarune/</a>
                 </div>
             `;
