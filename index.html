@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DELTARUNE</title>
-  <!-- Webbrowser Icon (Favicon) -->
   <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/soul.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -165,7 +164,6 @@
         <img src="https://cdn.jsdelivr.net/gh/ByAlvaro19/deltarune@main/icons/0.png">
       </a>
       
-      <!-- Mobile Hardware Switch -->
       <a href="javascript:toggleMobileHardware()" class="row">
         <span class="chapter">SYSTEM</span>
         <span class="title" id="mobile-controls-status-text">Mobile controls: OFF</span>
@@ -186,7 +184,6 @@
     </div>
   </div>
 
-  <!-- --- Injected Engine Layers --- -->
   <div id="loader-screen"><p>Launching...</p></div>
   <iframe id="game-frame"></iframe>
 
@@ -620,6 +617,16 @@
     document.addEventListener('keydown', handleMenuNavigation);
 
     window.onload = () => {
+        // Restore domain notice check
+        if (window.location.hostname === 'deltarunefullwebport.vercel.app') {
+            document.getElementById('notice-container').innerHTML = `
+                <div class="deactivation-warning">
+                    This domain might get deactivated soon. Please switch to the new official domain: 
+                    <a href="https://byalvaro19.github.io/deltarune/" target="_blank">byalvaro19.github.io/deltarune/</a>
+                </div>
+            `;
+        }
+
         const savedToggle = localStorage.getItem('deltarune-mobile-toggle');
         if(savedToggle === 'true') {
             useMobileControls = true;
