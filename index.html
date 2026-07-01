@@ -36,6 +36,7 @@
   font-size: 16px;
   line-height: 1.4;
 }
+
 .deactivation-warning a {
   color: #ffff00; 
   text-decoration: underline;
@@ -126,7 +127,6 @@
       sndSelect.play().catch(() => {});
     }
 
-    // --- Core Engine IndexedDB Match ---
     const DB_NAME = '/_savedata';
     const STORE_NAME = 'FILE_DATA';
 
@@ -166,11 +166,10 @@
       return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         
-        // Emscripten IDBFS format conversion
         const uint8Contents = new TextEncoder().encode(textContent);
         const emscriptenFileObj = {
           timestamp: new Date(),
-          mode: 33206, // Standard file mode (0100666)
+          mode: 33206, 
           contents: uint8Contents
         };
 
