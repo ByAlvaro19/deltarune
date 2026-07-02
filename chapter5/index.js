@@ -978,40 +978,32 @@
       }
 
       function ensureAspectRatio() {
-        if (canvasElement === undefined) {
-          return;
-        }
-
-        if (!CHANGE_ASPECT_RATIO) {
-          return;
-        }
-        
-        if (startingHeight === undefined && startingWidth === undefined) {
-          return;
-        }
+        if (!canvasElement) return;
+        if (!CHANGE_ASPECT_RATIO) return;
 
         canvasElement.classList.add("active");
 
         const maxWidth = window.innerWidth;
         const maxHeight = window.innerHeight;
-        var newHeight, newWidth;
+        
+        // B-Don't break if these aren't set yet! Fallback to 16:9 for Deltarune
+        const targetAspect = startingAspect || (1920 / 1080); 
 
-        // Find the limiting dimension.
-        var heightQuotient = startingHeight / maxHeight;
-        var widthQuotient = startingWidth / maxWidth;
+        let newHeight, newWidth;
 
-        if (heightQuotient > widthQuotient) {
-          // Max out on height.
-          newHeight = maxHeight;
-          newWidth = newHeight * startingAspect;
-        } else {
-          // Max out on width.
+        // Strictly calculate boundings based on the aspect ratio anchor
+        if (maxWidth / maxHeight < targetAspect) {
+          // Width is the limiting factor
           newWidth = maxWidth;
-          newHeight = newWidth / startingAspect;
+          newHeight = newWidth / targetAspect;
+        } else {
+          // Height is the limiting factor
+          newHeight = maxHeight;
+          newWidth = newHeight * targetAspect;
         }
 
-        canvasElement.style.height = newHeight + "px";
-        canvasElement.style.width = newWidth + "px";
+        canvasElement.style.width = Math.floor(newWidth) + "px";
+        canvasElement.style.height = Math.floor(newHeight) + "px";
       }
 		// To Pause when it detects the Tab is inactive
       function pause() { // Don't change the name - GX Mobile calls it when the app becomes inactive.
