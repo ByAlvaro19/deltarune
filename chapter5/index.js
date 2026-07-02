@@ -90,8 +90,8 @@
 			  // stops loading text on game run
 			  loadprogress += 1;
               // This Forces 1920x1080 aspect ratio on game startup
-              canvas.width = 1920;
-              canvas.height = 1080;
+              canvas.width = 640;
+              canvas.height = 480;
 
 			  // TRUE END of custom shit
             }
@@ -981,17 +981,17 @@
         if (!canvasElement) return;
         if (!CHANGE_ASPECT_RATIO) return;
 
+        // B-Don't try to calculate if sizes aren't initialized yet! 
+        // Defaulting to 640/480 (4:3) if they're missing.
+        const targetAspect = startingAspect || (640 / 480);
+
         canvasElement.classList.add("active");
 
         const maxWidth = window.innerWidth;
         const maxHeight = window.innerHeight;
-        
-        // B-Don't break if these aren't set yet! Fallback to 16:9 for Deltarune
-        const targetAspect = startingAspect || (1920 / 1080); 
-
         let newHeight, newWidth;
 
-        // Strictly calculate boundings based on the aspect ratio anchor
+        // Strict boundary check instead of flawed quotients
         if (maxWidth / maxHeight < targetAspect) {
           // Width is the limiting factor
           newWidth = maxWidth;
@@ -1002,6 +1002,7 @@
           newWidth = newHeight * targetAspect;
         }
 
+        // Math.floor prevents sub-pixel blurring/stretching artifacts on resize
         canvasElement.style.width = Math.floor(newWidth) + "px";
         canvasElement.style.height = Math.floor(newHeight) + "px";
       }
