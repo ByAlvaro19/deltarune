@@ -218,7 +218,9 @@
       function manifestFiles()
       {
         return [
- "audio-worklet.js",
+ "Splitdatawin.py",
+"audio-worklet.js",
+"audio_intronoise.ogg",
 "fnames",
 "index.html",
 "mus/4rd_sanctuary.ogg",
@@ -561,6 +563,7 @@
 "mus/wind.ogg",
 "mus/wind_highplace.ogg",
 "mus_undynescary.ogg",
+"packrunnerfiles.py",
 "runner-sw.js",
 "runner.data.part1",
 "runner.data.part2",

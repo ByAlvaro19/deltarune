@@ -1,6 +1,8 @@
 {
   "manifestFiles": [
+    "Splitdatawin.py",
     "audio-worklet.js",
+    "audio_intronoise.ogg",
     "fnames",
     "index.html",
     "index.js",
@@ -344,6 +346,7 @@
     "mus/wind.ogg",
     "mus/wind_highplace.ogg",
     "mus_undynescary.ogg",
+    "packindexfiles.py",
     "runner-sw.js",
     "runner.data.part1",
     "runner.data.part2",
