@@ -412,7 +412,7 @@
   }
 
   Promise.all([
-    mergeFiles(getParts("game.unx", 1, 10)),
+    mergeFiles(getParts("game.unx", 1, 13)),
     mergeFiles(getParts("runner.data", 1, 2))
 ]).then(([gameunx, runnerdata]) => {
   window.gameUnxUrl = gameunx;
