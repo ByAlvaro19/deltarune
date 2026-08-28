@@ -14,6 +14,10 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: none;
     -webkit-font-smoothing: antialiased;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
   }
 
   *:focus {
@@ -74,10 +78,10 @@
   .btn.active { background: rgba(255, 255, 255, 0.6); border-color: #fff; }
   
   .dpad-container { position: relative; width: 100%; height: 100%; cursor: pointer; }
-  .dpad-btn { 
-      position: absolute; width: 55px; height: 55px; 
-      background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255,255,255,0.3); 
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+  .dpad-btn {
+      position: absolute; width: 55px; height: 55px;
+      background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
       color: white; pointer-events: none;
       font-family: "Arial", sans-serif; font-size: 22px; line-height: 1;
   }
@@ -85,6 +89,25 @@
   #down { bottom: 0; left: 50%; transform: translateX(-50%); }
   #left { left: 0; top: 50%; transform: translateY(-50%); }
   #right { right: 0; top: 50%; transform: translateY(-50%); }
+
+  .joystick-base, .joystick-knob { display: none; pointer-events: none; }
+  .dpad-container.joystick-mode .dpad-btn { display: none; }
+  .dpad-container.joystick-mode .joystick-base {
+      display: block; position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255,255,255,0.3);
+  }
+  .dpad-container.joystick-mode .joystick-knob {
+      display: block; position: absolute; top: 50%; left: 50%; width: 60px; height: 60px;
+      margin: -30px 0 0 -30px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255,255,255,0.6);
+      transition: transform 0.05s linear;
+  }
+
+  .style-btn {
+      flex: 1; padding: 8px; background: rgba(68, 68, 68, 0.8); color: white;
+      border: 1px solid #777; border-radius: 8px; cursor: pointer; font-family: sans-serif; font-size: 0.85rem;
+  }
+  .style-btn.active { background: #00bfff; border-color: #00bfff; }
 
   #settings-bar { position: fixed; top: 10px; right: 10px; z-index: 50; display: none; gap: 5px; pointer-events: auto; }
   #settings-bar button { padding: 10px; background: rgba(68, 68, 68, 0.8); color: white; border: 1px solid #777; border-radius: 8px; cursor: pointer; font-family: sans-serif; }
@@ -192,6 +215,7 @@
               <div id="down" class="dpad-btn">▼</div>
               <div id="left" class="dpad-btn">◀</div>
               <div id="right" class="dpad-btn">▶</div>
+              <div class="joystick-base" id="joystick-base"><div class="joystick-knob" id="joystick-knob"></div></div>
           </div>
       </div>
       <div id="btn-z" class="touch-group draggable" data-save-id="z-btn"><div class="btn game-btn" data-key="z">Z</div></div>
@@ -206,6 +230,13 @@
   <div id="settings-panel">
       <div style="margin-bottom:15px"><label>Opacity</label><input type="range" id="opacity-slider" min="0.05" max="1" step="0.05" style="width:100%"></div>
       <div style="margin-bottom:15px"><label>Size</label><input type="range" id="size-slider" min="0.5" max="3.0" step="0.1" style="width:100%"></div>
+      <div style="margin-bottom:15px">
+          <label>D-Pad Style</label>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+              <button type="button" id="style-dpad-btn" class="style-btn">D-Pad</button>
+              <button type="button" id="style-joystick-btn" class="style-btn">Joystick</button>
+          </div>
+      </div>
       <button id="reset-pos" style="width:100%; background:#922; color:white; border:none; padding:10px; border-radius:6px;">Reset Layout</button>
   </div>
 
@@ -373,7 +404,7 @@
     const hud = document.getElementById('hud-layer');
     const STORAGE_KEY = 'deltarune-v17-stable';
     let isEditing = false;
-    let config = { opacity: 1, scale: 1.3, positions: {} };
+    let config = { opacity: 1, scale: 1.3, positions: {}, controlStyle: 'dpad' };
 
     const keyMap = { 'ArrowUp': 38, 'ArrowDown': 40, 'ArrowLeft': 37, 'ArrowRight': 39, 'z': 90, 'x': 88, 'c': 67 };
     const activeKeys = new Set();
@@ -390,7 +421,12 @@
     }
 
     const dpadZone = document.getElementById('dpad-touch-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
     let isMouseDownOnDpad = false;
+
+    function resetJoystickKnob() {
+        joystickKnob.style.transform = 'translate(0px, 0px)';
+    }
 
     function processDpad(clientX, clientY) {
         if (isEditing) return;
@@ -398,6 +434,16 @@
         const dx = clientX - (rect.left + rect.width / 2);
         const dy = clientY - (rect.top + rect.height / 2);
         const dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (config.controlStyle === 'joystick') {
+            const maxRadius = rect.width / 2 - 30;
+            const clampedDist = Math.min(dist, maxRadius);
+            const angleRad = Math.atan2(dy, dx);
+            const knobX = Math.cos(angleRad) * clampedDist;
+            const knobY = Math.sin(angleRad) * clampedDist;
+            joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+        }
+
         const newKeys = new Set();
         if (dist > 15) {
             let angle = Math.atan2(dy, dx) * 180 / Math.PI;
@@ -417,11 +463,11 @@
 
     dpadZone.addEventListener('touchstart', e => processDpad(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
     dpadZone.addEventListener('touchmove', e => { e.preventDefault(); processDpad(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
-    dpadZone.addEventListener('touchend', () => ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(k => updateKey(k, false)));
+    dpadZone.addEventListener('touchend', () => { ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(k => updateKey(k, false)); resetJoystickKnob(); });
 
     dpadZone.addEventListener('mousedown', e => { isMouseDownOnDpad = true; processDpad(e.clientX, e.clientY); });
     window.addEventListener('mousemove', e => { if (isMouseDownOnDpad) processDpad(e.clientX, e.clientY); });
-    window.addEventListener('mouseup', () => { if (isMouseDownOnDpad) { isMouseDownOnDpad = false; ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(k => updateKey(k, false)); } });
+    window.addEventListener('mouseup', () => { if (isMouseDownOnDpad) { isMouseDownOnDpad = false; ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(k => updateKey(k, false)); resetJoystickKnob(); } });
 
     document.querySelectorAll('.game-btn').forEach(btn => {
         const key = btn.getAttribute('data-key');
@@ -464,6 +510,16 @@
             const el = document.querySelector(`[data-save-id="${id}"]`);
             if(el && pos && pos.x && pos.y) { el.style.left = pos.x; el.style.top = pos.y; }
         });
+
+        dpadZone.classList.toggle('joystick-mode', config.controlStyle === 'joystick');
+        document.getElementById('style-dpad-btn').classList.toggle('active', config.controlStyle !== 'joystick');
+        document.getElementById('style-joystick-btn').classList.toggle('active', config.controlStyle === 'joystick');
+        resetJoystickKnob();
+    }
+
+    function setControlStyle(style) {
+        config.controlStyle = style;
+        applyConfig();
     }
 
     document.getElementById('settings-toggle').onclick = () => {
@@ -487,19 +543,21 @@
 
     document.getElementById('opacity-slider').oninput = e => { config.opacity = e.target.value; applyConfig(); };
     document.getElementById('size-slider').oninput = e => { config.scale = e.target.value; applyConfig(); };
-    
+    document.getElementById('style-dpad-btn').onclick = () => setControlStyle('dpad');
+    document.getElementById('style-joystick-btn').onclick = () => setControlStyle('joystick');
+
     document.getElementById('reset-pos').onclick = () => {
-        config = { opacity: 1, scale: 1.3, positions: {} };
+        config = { opacity: 1, scale: 1.3, positions: {}, controlStyle: 'dpad' };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-        
+
         document.getElementById('opacity-slider').value = 1;
         document.getElementById('size-slider').value = 1.3;
-        
+
         document.querySelectorAll('.draggable').forEach(el => {
             el.style.left = '';
             el.style.top = '';
         });
-        
+
         applyConfig();
     };
 
@@ -637,6 +695,7 @@
         if (config.opacity === undefined) config.opacity = 1;
         if (config.scale === undefined) config.scale = 1.3;
         if (!config.positions) config.positions = {};
+        if (!config.controlStyle) config.controlStyle = 'dpad';
 
         document.getElementById('opacity-slider').value = config.opacity;
         document.getElementById('size-slider').value = config.scale;
